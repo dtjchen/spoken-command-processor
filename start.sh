@@ -8,7 +8,7 @@ PROJECT_ROOT=$PWD
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
 for dir in $PROJECT_ROOT/*; do
-	export PYTHONPATH=$PYTHONPATH:$dir
+  export PYTHONPATH=$PYTHONPATH:$dir
 done
 
 ##############################
