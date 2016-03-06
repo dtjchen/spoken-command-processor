@@ -1,0 +1,7 @@
+# Don't commit training data i.e. wav files
+volumes/**/*.wav
+
+__pycache__
+*.pyc
+
+.DS_Store
