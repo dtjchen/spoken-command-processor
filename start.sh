@@ -21,14 +21,12 @@ export VOLUMES_META=$VOLUMES/meta.txt
 ####################################################################
 # Read constants from $VOLUMES_META and set them as env. variables #
 ####################################################################
-regex="([A-Z_]+)=([0-9]+)"
-
-cat $VOLUMES_META | while read line; do
-    if [[ $line =~ $regex ]]
+while read line; do
+    if [[ $line =~ ([A-Z_]+)=([0-9]+) ]]
     then
-      key=${BASH_REMATCH[1]}
-      value=${BASH_REMATCH[2]}
+      constant_name=${BASH_REMATCH[1]}
+      constant_value=${BASH_REMATCH[2]}
 
-      export $key=$value # TODO: fix! does not work
+      export $constant_name=$constant_value
     fi
-done
+done < $VOLUMES_META
