@@ -39,7 +39,7 @@ def read_wavfile(wavfile, labels_file):
     segment_duration_frames = int((segment_duration_ms / 1000.) * sampling_rate)
 
     hop_duration_ms = 10
-    hop_duration_frames = (hop_duration_ms / 1000.) * sampling_rate
+    hop_duration_frames = int((hop_duration_ms / 1000.) * sampling_rate)
 
     mfccs = librosa.feature.mfcc(
         y=frames,
@@ -58,7 +58,7 @@ def read_wavfile(wavfile, labels_file):
             start_frame, end_frame, label = line.split(' ')
             start_frame, end_frame = int(start_frame), int(end_frame)
 
-            phn_frames = end_frame - start_frame + 1
+            phn_frames = end_frame - start_frame
             labels.extend([label] * phn_frames)
 
     ###########################################
@@ -66,13 +66,13 @@ def read_wavfile(wavfile, labels_file):
     classified = []
     curr_frame = curr_mfcc = 0
 
-    while (curr_frame < (len(frames) - segment_duration_frames)):
+    while (curr_frame < (len(labels) - segment_duration_frames)):
         label = max(labels[curr_frame:(curr_frame + segment_duration_frames)])
         input_vec = InputVector(mfcc=mfccs[:,curr_mfcc], label=label)
         classified.append(input_vec)
 
         curr_mfcc += 1
-        curr_frame += segment_duration_frames
+        curr_frame += hop_duration_frames
 
     return classified
 
