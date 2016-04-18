@@ -57,6 +57,7 @@ def read_wavfile(wavfile, labels_file):
         for line in f.readlines():
             start_frame, end_frame, label = line.split(' ')
             start_frame, end_frame = int(start_frame), int(end_frame)
+            label = label.strip('\n')
 
             phn_frames = end_frame - start_frame
             labels.extend([label] * phn_frames)
