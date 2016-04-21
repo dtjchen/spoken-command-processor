@@ -1,6 +1,8 @@
 #!/bin/bash
 
-PROJECT_ROOT=$PWD
+# The root of the project is the root of this script
+# http://stackoverflow.com/a/246128/2708484
+export PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 ######################################
 # Add relevant modules to PYTHONPATH #
