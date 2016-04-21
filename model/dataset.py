@@ -103,8 +103,6 @@ def read_labeled_wavfiles(root_timit_path):
             X.append(mfccs)
             y.append(label)
 
-        break
-
     # Convert phoneme strings in y_train to class numbers
     phonemes = load_unique_phonemes_as_class_numbers()
     y = [phonemes[y[i]] for i in range(len(y))]
