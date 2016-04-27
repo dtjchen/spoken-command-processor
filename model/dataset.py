@@ -4,24 +4,10 @@ import librosa
 import scipy
 import numpy as np
 from sklearn import preprocessing
+from . import params
 
 
-class ModelDataPath(type):
-    data_dir = os.path.join(os.environ['PROJECT_ROOT'], 'model', 'data')
-
-    def __getattr__(self, name):
-        return os.path.join(self.data_dir, name + '.npy')
-
-class ModelData(object):
-    """
-    Allows us to map model data to their respective .npy paths.
-
-    Ex.
-        ModelData.X_train --> '~/speech-analysis/model/params/X_train.npy'
-    """
-    __metaclass__ = ModelDataPath
-
-def load_training_data():
+def load_training_data(limit=None):
     """
     Returns:
         X_train --> [num_of_training_mfcc_vectors, 20]
@@ -29,10 +15,10 @@ def load_training_data():
     """
     print('Loading training data...')
 
-    if all(os.path.exists(p) for p in [ModelData.X_train, ModelData.y_train]):
+    if all(os.path.exists(p) for p in [params('X_train'), params('y_train')]):
         print('Found .npy files for X_train and y_train. Loading...')
-        X_train = np.load(ModelData.X_train)
-        y_train = np.load(ModelData.y_train)
+        X_train = np.load(params('X_train'))
+        y_train = np.load(params('y_train'))
 
     else:
         print('Did not find .npy files for X_train and y_train. Parsing dataset...')
@@ -45,22 +31,27 @@ def load_training_data():
 
         X_train = scaler.transform(X_train_raw)
 
-        np.save(ModelData.mfcc_means, scaler.mean_)
-        np.save(ModelData.X_train, X_train)
-        np.save(ModelData.y_train, y_train)
+        np.save(params('mfcc_means'), scaler.mean_)
+        np.save(params('X_train'), X_train)
+        np.save(params('y_train'), y_train)
+
+    if limit:
+        print('Returning %d/%d of the training data...' % (limit, X_train.shape[0]))
+        X_train = X_train[:limit, :]
+        y_train = y_train[:limit]
 
     return X_train, y_train
 
-def load_test_data():
+def load_test_data(limit=None):
     """
     Returns:
         X_test  --> [num_of_testing_mfcc_vectors, 20]
         y_test  --> [num_of_testing_mfcc_vectors, 1]
     """
-    if all(os.path.exists(p) for p in [ModelData.X_test, ModelData.y_test]):
+    if all(os.path.exists(p) for p in [params('X_test'), params('y_test')]):
         print('Found .npy files for X_test and y_test. Loading...')
-        X_test = np.load(ModelData.X_test)
-        y_test = np.load(ModelData.y_test)
+        X_test = np.load(params('X_test'))
+        y_test = np.load(params('y_test'))
 
     else:
         print('Did not find .npy files for X_test and y_test. Parsing dataset...')
@@ -68,12 +59,17 @@ def load_test_data():
 
         # Use the MFCC means from the training set to normalize X_train
         scaler = preprocessing.StandardScaler(with_mean=True, with_std=False)
-        scaler.mean_ = np.load(ModelData.mfcc_means)
+        scaler.mean_ = np.load(params('mfcc_means'))
 
         X_test = scaler.fit_transform(X_test_raw)
 
-        np.save(ModelData.X_test, X_test)
-        np.save(ModelData.y_test, y_test)
+        np.save(params('X_test'), X_test)
+        np.save(params('y_test'), y_test)
+
+    if limit:
+        print('Returning %d/%d of the testing data...' % (limit, X_test.shape[0]))
+        X_test = X_test[:limit, :]
+        y_test = y_test[:limit]
 
     return X_test, y_test
 
