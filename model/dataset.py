@@ -118,12 +118,18 @@ def read_labeled_wavfile(wavfile, labels_file):
     hop_duration_ms = 10
     hop_duration_frames = int((hop_duration_ms / 1000.) * sampling_rate)
 
+    mfcc_count = 13
+
     mfccs = librosa.feature.mfcc(
         y=frames,
         sr=sampling_rate,
+        n_mfcc=mfcc_count,
         hop_length=hop_duration_frames,
         n_fft=segment_duration_frames
     )
+    mfcc_delta = librosa.feature.delta(mfccs)
+    mfcc_delta2 = librosa.feature.delta(mfccs, order=2)
+    mfccs_and_deltas = np.vstack([mfccs, mfcc_delta, mfcc_delta2])
 
     ############################################
 
@@ -147,7 +153,7 @@ def read_labeled_wavfile(wavfile, labels_file):
     while (curr_frame < (len(labels) - segment_duration_frames)):
         label = max(labels[curr_frame:(curr_frame + segment_duration_frames)])
 
-        yield mfccs[:,curr_mfcc], label
+        yield mfccs_and_deltas[:,curr_mfcc], label
 
         curr_mfcc += 1
         curr_frame += hop_duration_frames
