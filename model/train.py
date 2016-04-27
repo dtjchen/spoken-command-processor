@@ -7,7 +7,7 @@ from keras.preprocessing import sequence
 from keras.models import Model
 from keras.layers import Dense, Dropout, Activation, Embedding, LSTM, Input, merge
 from keras.models import Sequential
-from keras.optimizers import SGD, Adadelta
+from keras.optimizers import SGD, Adadelta, Adam
 import matplotlib.pyplot as P
 import numpy as np
 import dataset
@@ -44,7 +44,7 @@ def train():
     model.add(Activation('softmax'))
 
     #optimizer = SGD(lr=0.01, momentum=0.9, nesterov=True)
-    optimizer = Adadelta()
+    optimizer = Adam(lr=0.001)
     loss ='categorical_crossentropy'
 
     model.compile(loss=loss, optimizer=optimizer)
