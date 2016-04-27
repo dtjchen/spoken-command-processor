@@ -1,1 +1,8 @@
+# General Numpy data
 *.npy
+
+# Architecture (Keras)
+*.json
+
+# Weights (Keras)
+*.h5
