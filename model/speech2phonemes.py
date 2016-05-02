@@ -1,16 +1,13 @@
 from keras.models import Sequential, model_from_json
 from keras.layers import Dense, Dropout, Activation
 from keras.optimizers import Adam
-import matplotlib.pyplot as plt
 import numpy as np
-from . import params, dataset, utils
+from . import utils, dataset
 
-
-loss = 'categorical_crossentropy'
-optimizer = Adam(lr=0.001)
 
 def train(summarize=False, data_limit=None):
-    X_train, y_train = dataset.load_training_data(limit=data_limit)
+    reader = dataset.TIMITReader('speech2phonemes')
+    X_train, y_train = reader.load_training_data(limit=data_limit)
 
     # Number of features for each sample in X_train...
     # if each 20ms corresponds to 13 MFCC coefficients + delta + delta2, then 39
@@ -32,12 +29,12 @@ def train(summarize=False, data_limit=None):
     model.add(Dense(output_dim=output_dim))
     model.add(Activation('softmax'))
 
-    model.compile(loss=loss, optimizer=optimizer)
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.001))
 
     stats = model.fit(X_train, y_train_onehot,
         shuffle=True,
         batch_size=256,
-        nb_epoch=150,
+        nb_epoch=20,
         verbose=1
     )
 
@@ -46,6 +43,7 @@ def train(summarize=False, data_limit=None):
     if summarize:
         print(model.summary())
 
+        import matplotlib.pyplot as plt
         plt.plot(stats.history['loss'])
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
@@ -65,18 +63,22 @@ def test(data_limit=None):
     print('Accuracy using %d testing samples: %f' % (X_test.shape[0], acc))
 
 def save_model(model):
-    with open(params('speech2phonemes_arch', 'json'), 'w') as archf:
+    reader = dataset.TIMITReader('speech2phonemes')
+
+    with open(reader.params('speech2phonemes_arch', 'json'), 'w') as archf:
         archf.write(model.to_json())
 
     model.save_weights(
-        filepath=params('speech2phonemes_weights', 'h5'),
+        filepath=reader.params('speech2phonemes_weights', 'h5'),
         overwrite=True
     )
 
 def load_model():
-    with open(params('speech2phonemes_arch', 'json')) as arch:
-        model = model_from_json(arch.read())
-        model.load_weights(params('speech2phonemes_weights', 'h5'))
+    reader = dataset.TIMITReader('speech2phonemes')
 
-        model.compile(loss=loss, optimizer=optimizer)
+    with open(reader.params('speech2phonemes_arch', 'json')) as arch:
+        model = model_from_json(arch.read())
+        model.load_weights(dataset.params('speech2phonemes_weights', 'h5'))
+
+        model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.001))
         return model

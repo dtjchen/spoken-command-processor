@@ -4,152 +4,181 @@ import librosa
 import scipy
 import numpy as np
 from sklearn import preprocessing
-from . import params
 
 
-def load_training_data(limit=None):
-    """
-    Returns:
-        X_train --> [num_of_training_mfcc_vectors, 20]
-        y_train --> [num_of_training_mfcc_vectors, 1]
-    """
-    print('Loading training data...')
+class TIMITReader:
+    def __init__(self, model_name):
+        """
+        Necessary env. vars.:
+            - PROJECT_ROOT
+            - TIMIT_TRAINING_PATH
+            - TIMIT_TESTING_PATH
+            - PHONE_LIST_PATH
+        """
+        self.train_dataset_path = os.environ['TIMIT_TRAINING_PATH']
+        self.test_dataset_path = os.environ['TIMIT_TESTING_PATH']
 
-    if all(os.path.exists(p) for p in [params('X_train'), params('y_train')]):
-        print('Found .npy files for X_train and y_train. Loading...')
-        X_train = np.load(params('X_train'))
-        y_train = np.load(params('y_train'))
+        data_root = os.path.join(os.environ['PROJECT_ROOT'], 'model', 'data')
 
-    else:
-        print('Did not find .npy files for X_train and y_train. Parsing dataset...')
-        X_train_raw, y_train = read_labeled_wavfiles(os.environ['TIMIT_TRAINING_PATH'])
+        if model_name == 'speech2phonemes':
+            self.reader_func = self._read_labeled_wavfiles
+            self.data_dir = os.path.join(data_root, 'speech2phonemes')
 
-        print('Normalizing X_train around each MFCC coefficient\'s mean...')
-        scaler = preprocessing\
-            .StandardScaler(with_mean=True, with_std=False)\
-            .fit(X_train_raw)
+        elif model_name == 'phonemes2text':
+            self.reader_func = self._read_labeled_phnfiles
+            self.data_dir = os.path.join(data_root, 'phonemes2text')
 
-        X_train = scaler.transform(X_train_raw)
+    def params(self, name, ext='npy'):
+        return os.path.join(self.data_dir, name + '.%s' % ext)
 
-        np.save(params('mfcc_means'), scaler.mean_)
-        np.save(params('X_train'), X_train)
-        np.save(params('y_train'), y_train)
+    def load_train_data(self, limit=None):
+        """
+        For self.model == 'speech2phonemes', returns:
+            X_train --> [num_of_training_mfcc_vectors, 20]
+            y_train --> [num_of_training_mfcc_vectors, 1]
+        """
+        print('Loading training data...')
 
-    if limit:
-        print('Returning %d/%d of the training data...' % (limit, X_train.shape[0]))
-        X_train = X_train[:limit, :]
-        y_train = y_train[:limit]
+        if all(map(os.path.exists, [self.params('X_train'), self.params('y_train')])):
+            print('Found .npy files for X_train and y_train. Loading...')
+            X_train = np.load(self.params('X_train'))
+            y_train = np.load(self.params('y_train'))
 
-    return X_train, y_train
+        else:
+            print('Did not find .npy files for X_train and y_train. Parsing dataset...')
+            #X_train_raw, y_train = read_labeled_wavfiles(os.environ['TIMIT_TRAINING_PATH'])
+            X_train_raw, y_train = self.reader_func(self.train_dataset_path)
 
-def load_test_data(limit=None):
-    """
-    Returns:
-        X_test  --> [num_of_testing_mfcc_vectors, 20]
-        y_test  --> [num_of_testing_mfcc_vectors, 1]
-    """
-    if all(os.path.exists(p) for p in [params('X_test'), params('y_test')]):
-        print('Found .npy files for X_test and y_test. Loading...')
-        X_test = np.load(params('X_test'))
-        y_test = np.load(params('y_test'))
+            print('Normalizing X_train around each MFCC coefficient\'s mean...')
+            scaler = preprocessing\
+                .StandardScaler(with_mean=True, with_std=False)\
+                .fit(X_train_raw)
 
-    else:
-        print('Did not find .npy files for X_test and y_test. Parsing dataset...')
-        X_test_raw, y_test = read_labeled_wavfiles(os.environ['TIMIT_TESTING_PATH'])
+            X_train = scaler.transform(X_train_raw)
 
-        # Use the MFCC means from the training set to normalize X_train
-        scaler = preprocessing.StandardScaler(with_mean=True, with_std=False)
-        scaler.mean_ = np.load(params('mfcc_means'))
+            np.save(self.params('mfcc_means'), scaler.mean_)
+            np.save(self.params('X_train'), X_train)
+            np.save(self.params('y_train'), y_train)
 
-        X_test = scaler.fit_transform(X_test_raw)
+        if limit:
+            print('Returning %d/%d of the training data...' % (limit, X_train.shape[0]))
+            X_train = X_train[:limit, :]
+            y_train = y_train[:limit]
 
-        np.save(params('X_test'), X_test)
-        np.save(params('y_test'), y_test)
+        return X_train, y_train
 
-    if limit:
-        print('Returning %d/%d of the testing data...' % (limit, X_test.shape[0]))
-        X_test = X_test[:limit, :]
-        y_test = y_test[:limit]
+    def load_test_data(self, limit=None):
+        """
+        For self.model == 'speech2phonemes', returns:
+            X_test  --> [num_of_testing_mfcc_vectors, 20]
+            y_test  --> [num_of_testing_mfcc_vectors, 1]
+        """
+        if all(map(os.path.exists, [self.params('X_test'), self.params('y_test')])):
+            print('Found .npy files for X_test and y_test. Loading...')
+            X_test = np.load(self.params('X_test'))
+            y_test = np.load(self.params('y_test'))
 
-    return X_test, y_test
+        else:
+            print('Did not find .npy files for X_test and y_test. Parsing dataset...')
+            #X_test_raw, y_test = read_labeled_wavfiles(os.environ['TIMIT_TESTING_PATH'])
+            X_test_raw, y_test = self.reader_func(self.test_dataset_path)
 
-def load_unique_phonemes_as_class_numbers():
-    this = load_unique_phonemes_as_class_numbers
+            # Use the MFCC means from the training set to normalize X_train
+            scaler = preprocessing.StandardScaler(with_mean=True, with_std=False)
+            scaler.mean_ = np.load(self.params('mfcc_means'))
 
-    if not hasattr(this, 'phonemes'):
-        this.phonemes = {}
+            X_test = scaler.fit_transform(X_test_raw)
 
-        with open(os.environ['PHONE_LIST_PATH'], 'r') as f:
-            class_number = 0
+            np.save(self.params('X_test'), X_test)
+            np.save(self.params('y_test'), y_test)
 
-            for ph in map(lambda p: p.strip(), f.readlines()):
-                this.phonemes[ph] = class_number
-                class_number += 1
+        if limit:
+            print('Returning %d/%d of the testing data...' % (limit, X_test.shape[0]))
+            X_test = X_test[:limit, :]
+            y_test = y_test[:limit]
 
-    return this.phonemes
+        return X_test, y_test
 
-def read_labeled_wavfiles(root_timit_path):
-    wavfiles = sorted(glob.glob(root_timit_path + '/*/*/*.WAV'))
-    labels_files = sorted(glob.glob(root_timit_path + '/*/*/*.PHN'))
+    def _read_labeled_wavfiles(self, root_timit_path):
+        wavfiles = sorted(glob.glob(root_timit_path + '/*/*/*.WAV'))
+        labels_files = sorted(glob.glob(root_timit_path + '/*/*/*.PHN'))
 
-    X, y = [], []
+        X, y = [], []
 
-    for wf, lf in zip(wavfiles, labels_files):
-        for mfccs, label in read_labeled_wavfile(wf, lf):
-            X.append(mfccs)
-            y.append(label)
+        for wf, lf in zip(wavfiles, labels_files):
+            for mfccs, label in self._read_labeled_wavfile(wf, lf):
+                X.append(mfccs)
+                y.append(label)
 
-    # Convert phoneme strings in y_train to class numbers
-    phonemes = load_unique_phonemes_as_class_numbers()
-    y = [phonemes[y[i]] for i in range(len(y))]
+        # Convert phoneme strings in y_train to class numbers
+        phonemes = self._load_unique_phonemes_as_class_numbers()
+        y = [phonemes[y[i]] for i in range(len(y))]
 
-    return np.array(X), np.array(y)
+        return np.array(X), np.array(y)
 
-def read_labeled_wavfile(wavfile, labels_file):
-    sampling_rate, frames = scipy.io.wavfile.read(wavfile)
+    def _read_labeled_wavfile(self, wavfile, labels_file):
+        sampling_rate, frames = scipy.io.wavfile.read(wavfile)
 
-    segment_duration_ms = 20
-    segment_duration_frames = int((segment_duration_ms / 1000.) * sampling_rate)
+        segment_duration_ms = 20
+        segment_duration_frames = int((segment_duration_ms / 1000.) * sampling_rate)
 
-    hop_duration_ms = 10
-    hop_duration_frames = int((hop_duration_ms / 1000.) * sampling_rate)
+        hop_duration_ms = 10
+        hop_duration_frames = int((hop_duration_ms / 1000.) * sampling_rate)
 
-    mfcc_count = 13
+        mfcc_count = 13
 
-    mfccs = librosa.feature.mfcc(
-        y=frames,
-        sr=sampling_rate,
-        n_mfcc=mfcc_count,
-        hop_length=hop_duration_frames,
-        n_fft=segment_duration_frames
-    )
-    mfcc_delta = librosa.feature.delta(mfccs)
-    mfcc_delta2 = librosa.feature.delta(mfccs, order=2)
-    mfccs_and_deltas = np.vstack([mfccs, mfcc_delta, mfcc_delta2])
+        mfccs = librosa.feature.mfcc(
+            y=frames,
+            sr=sampling_rate,
+            n_mfcc=mfcc_count,
+            hop_length=hop_duration_frames,
+            n_fft=segment_duration_frames
+        )
+        mfcc_delta = librosa.feature.delta(mfccs)
+        mfcc_delta2 = librosa.feature.delta(mfccs, order=2)
+        mfccs_and_deltas = np.vstack([mfccs, mfcc_delta, mfcc_delta2])
 
-    ############################################
+        ############################################
 
-    # Pass through the file with the phones
-    labels = []
+        # Pass through the file with the phones
+        labels = []
 
-    with open(labels_file, 'r') as f:
-        for line in f.readlines():
-            start_frame, end_frame, label = line.split(' ')
-            start_frame, end_frame = int(start_frame), int(end_frame)
-            label = label.strip('\n')
+        with open(labels_file, 'r') as f:
+            for line in f.readlines():
+                start_frame, end_frame, label = line.split(' ')
+                start_frame, end_frame = int(start_frame), int(end_frame)
+                label = label.strip('\n')
 
-            phn_frames = end_frame - start_frame
-            labels.extend([label] * phn_frames)
+                phn_frames = end_frame - start_frame
+                labels.extend([label] * phn_frames)
 
-    ###########################################
+        ###########################################
 
-    classified = []
-    curr_frame = curr_mfcc = 0
+        classified = []
+        curr_frame = curr_mfcc = 0
 
-    while (curr_frame < (len(labels) - segment_duration_frames)):
-        label = max(labels[curr_frame:(curr_frame + segment_duration_frames)])
+        while (curr_frame < (len(labels) - segment_duration_frames)):
+            label = max(labels[curr_frame:(curr_frame + segment_duration_frames)])
 
-        yield mfccs_and_deltas[:,curr_mfcc], label
+            yield mfccs_and_deltas[:,curr_mfcc], label
 
-        curr_mfcc += 1
-        curr_frame += hop_duration_frames
+            curr_mfcc += 1
+            curr_frame += hop_duration_frames
+
+    def _load_unique_phonemes_as_class_numbers(self):
+        this = load_unique_phonemes_as_class_numbers
+
+        if not hasattr(this, 'phonemes'):
+            this.phonemes = {}
+
+            with open(os.environ['PHONE_LIST_PATH'], 'r') as f:
+                class_number = 0
+
+                for ph in map(lambda p: p.strip(), f.readlines()):
+                    this.phonemes[ph] = class_number
+                    class_number += 1
+
+        return this.phonemes
+
+    def _read_labeled_phnfiles(self):
+        pass
