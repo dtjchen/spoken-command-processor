@@ -62,6 +62,14 @@ def test(data_limit=None):
     acc = sum(out == y_test) * 1.0 / len(out)
     print('Accuracy using %d testing samples: %f' % (X_test.shape[0], acc))
 
+def predict(X_test):
+    model = load_model()
+
+    return model.predict_classes(X_test,
+        batch_size=256,
+        verbose=0
+    )
+
 def save_model(model):
     reader = dataset.TIMITReader('speech2phonemes')
 
