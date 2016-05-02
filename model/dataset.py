@@ -3,7 +3,9 @@ import glob
 import librosa
 import scipy
 import numpy as np
+import itertools
 from sklearn import preprocessing
+from . import utils
 
 
 class TIMITReader:
@@ -46,7 +48,6 @@ class TIMITReader:
 
         else:
             print('Did not find .npy files for X_train and y_train. Parsing dataset...')
-            #X_train_raw, y_train = read_labeled_wavfiles(os.environ['TIMIT_TRAINING_PATH'])
             X_train_raw, y_train = self.reader_func(self.train_dataset_path)
 
             print('Normalizing X_train around each MFCC coefficient\'s mean...')
@@ -80,7 +81,6 @@ class TIMITReader:
 
         else:
             print('Did not find .npy files for X_test and y_test. Parsing dataset...')
-            #X_test_raw, y_test = read_labeled_wavfiles(os.environ['TIMIT_TESTING_PATH'])
             X_test_raw, y_test = self.reader_func(self.test_dataset_path)
 
             # Use the MFCC means from the training set to normalize X_train
@@ -111,12 +111,13 @@ class TIMITReader:
                 y.append(label)
 
         # Convert phoneme strings in y_train to class numbers
-        phonemes = self._load_unique_phonemes_as_class_numbers()
-        y = [phonemes[y[i]] for i in range(len(y))]
+        phoneme_classes = self.load_unique_phonemes_as_class_numbers()
+        y = [phoneme_classes[y[i]] for i in range(len(y))]
 
         return np.array(X), np.array(y)
 
     def _read_labeled_wavfile(self, wavfile, labels_file):
+        """Map each 20ms recording to a single label."""
         sampling_rate, frames = scipy.io.wavfile.read(wavfile)
 
         segment_duration_ms = 20
@@ -145,9 +146,7 @@ class TIMITReader:
 
         with open(labels_file, 'r') as f:
             for line in f.readlines():
-                start_frame, end_frame, label = line.split(' ')
-                start_frame, end_frame = int(start_frame), int(end_frame)
-                label = label.strip('\n')
+                start_frame, end_frame, label = self._parse_timit_line(line)
 
                 phn_frames = end_frame - start_frame
                 labels.extend([label] * phn_frames)
@@ -165,20 +164,98 @@ class TIMITReader:
             curr_mfcc += 1
             curr_frame += hop_duration_frames
 
-    def _load_unique_phonemes_as_class_numbers(self):
-        this = load_unique_phonemes_as_class_numbers
+    def _read_labeled_phnfiles(self, root_timit_path):
+        phn_files = sorted(glob.glob(root_timit_path + '/*/*/*.PHN'))
+        word_files = sorted(glob.glob(root_timit_path + '/*/*/*.WRD'))
 
-        if not hasattr(this, 'phonemes'):
-            this.phonemes = {}
+        # Each word is mapped to a class number
+        word_classes = self.load_unique_words_as_class_numbers()
 
-            with open(os.environ['PHONE_LIST_PATH'], 'r') as f:
-                class_number = 0
+        # Used to get one-hot vectors for each word; this gives its size (4893)
+        num_distinct_words = len(word_classes)
 
-                for ph in map(lambda p: p.strip(), f.readlines()):
-                    this.phonemes[ph] = class_number
-                    class_number += 1
+        # Number of words disected into phonemes in TIMIT over 4620 files
+        # (some words are duplicates; i.e. different phoneme combinations)
+        num_samples = 39834
 
-        return this.phonemes
+        # Max phonemes per word (in the dataset, the largest is "encyclopedias"
+        # with 17... we'll go with a few more)
+        num_phones_per_word = 25
 
-    def _read_labeled_phnfiles(self):
-        pass
+        X = np.zeros((num_samples, num_phones_per_word, num_distinct_words))
+        y = np.zeros((num_samples, num_distinct_words))
+
+        """
+
+        print(X.shape)
+        print(y.shape)
+        exit()
+
+        X, y = [], []
+
+        maxsize = 0
+        fax = ""
+        num_words = 0
+        num_files = 0
+
+        for pf, wf in zip(phn_files, word_files):
+            num_files += 1
+
+            for word, phones_in_word in self._read_labeled_phnfile(pf, wf):
+                num_words += 1
+
+                if len(phones_in_word) > maxsize:
+                    maxsize = len(phones_in_word)
+                    fax = word
+
+        print(fax, maxsize, num_words, num_files)
+        exit()
+        """
+
+    def _read_labeled_phnfile(self, phn_file, word_file):
+        """Map each word to a list of phones (one phone per frame)"""
+        phns = []
+        with open(phn_file, 'r') as f:
+            for line in f.readlines():
+                start_frame, end_frame, label = self._parse_timit_line(line)
+
+                phn_frames = end_frame - start_frame
+                phns.extend([label] * phn_frames)
+
+        with open(word_file, 'r') as f:
+            for line in f.readlines():
+                start_frame, end_frame, label = self._parse_timit_line(line)
+
+                with_repeats = phns[start_frame:end_frame]
+                phns = [k[0] for k in itertools.groupby(with_repeats)]
+
+                yield label, phns
+
+    def _parse_timit_line(self, line):
+        start_frame, end_frame, label = line.split(' ')
+
+        return int(start_frame), int(end_frame), label.strip('\n')
+
+    def load_unique_phonemes_as_class_numbers(self):
+        phonemes = {}
+
+        with open(os.environ['PHONE_LIST_PATH'], 'r') as f:
+            class_number = 0
+
+            for ph in map(lambda p: p.strip(), f.readlines()):
+                phonemes[ph] = class_number
+                class_number += 1
+
+        return phonemes
+
+    def load_unique_words_as_class_numbers(cls):
+        words = {}
+
+        with open(os.environ['WORD_LIST_PATH'], 'r') as f:
+            class_number = 0
+
+            for word in map(lambda w: w.strip(), f.readlines()):
+                words[word] = class_number
+                class_number += 1
+
+        return words
