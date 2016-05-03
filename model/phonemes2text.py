@@ -10,10 +10,13 @@ def train(summarize=False, data_limit=None):
 
     # Number of phonemes per word (sample)
     input_dim = X_train.shape[1]
-    # Number of distinct classes in the dataset (number of distinct phonemes)
+    # Number of distinct classes in the dataset (number of distinct words)
     output_dim = y_train.shape[1]
-    # Arbitrary parameter (gets 32.7% for 1/3 of the data)
-    hidden_num = 256
+    # Arbitrary parameter
+    # 256 --> 32.7% accuracy
+    # 500 --> 46.0% accuracy
+    # 1500 --> 49.5% accuracy
+    hidden_num = 1500
 
     # Architecture of the model
     model = Sequential()
