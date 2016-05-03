@@ -12,7 +12,7 @@ def train(summarize=False, data_limit=None):
     input_dim = X_train.shape[1]
     # Number of distinct classes in the dataset (number of distinct words)
     output_dim = y_train.shape[1]
-    # Arbitrary parameter
+    # Arbitrary parameter. For 20 epochs...
     # 256 --> 32.7% accuracy
     # 500 --> 46.0% accuracy
     # 1500 --> 49.5% accuracy
@@ -25,6 +25,9 @@ def train(summarize=False, data_limit=None):
     model.add(Activation('sigmoid'))
     model.add(Dropout(0.25))
     model.add(Dense(output_dim=output_dim))
+    model.add(Activation('sigmoid'))
+    model.add(Dropout(0.40))
+    model.add(Dense(output_dim=output_dim))
     model.add(Activation('softmax'))
 
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.001))
@@ -32,7 +35,7 @@ def train(summarize=False, data_limit=None):
     stats = model.fit(X_train, y_train,
         shuffle=True,
         batch_size=256,
-        nb_epoch=20,
+        nb_epoch=50,
         verbose=1
     )
 
