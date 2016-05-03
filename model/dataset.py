@@ -140,28 +140,7 @@ class Speech2Phonemes(TIMITReader):
 
     def _read_labeled_wavfile(self, wavfile, labels_file):
         """Map each 20ms recording to a single label."""
-        sampling_rate, frames = scipy.io.wavfile.read(wavfile)
-
-        segment_duration_ms = 20
-        segment_duration_frames = int((segment_duration_ms / 1000.) * sampling_rate)
-
-        hop_duration_ms = 10
-        hop_duration_frames = int((hop_duration_ms / 1000.) * sampling_rate)
-
-        mfcc_count = 13
-
-        mfccs = librosa.feature.mfcc(
-            y=frames,
-            sr=sampling_rate,
-            n_mfcc=mfcc_count,
-            hop_length=hop_duration_frames,
-            n_fft=segment_duration_frames
-        )
-        mfcc_delta = librosa.feature.delta(mfccs)
-        mfcc_delta2 = librosa.feature.delta(mfccs, order=2)
-        mfccs_and_deltas = np.vstack([mfccs, mfcc_delta, mfcc_delta2])
-
-        ############################################
+        mfccs_and_deltas, segment_duration_frames, hop_duration_frames = utils.wavfile_to_mfccs(wavfile)
 
         # Pass through the file with the phones
         labels = []
@@ -172,8 +151,6 @@ class Speech2Phonemes(TIMITReader):
 
                 phn_frames = end_frame - start_frame
                 labels.extend([label] * phn_frames)
-
-        ###########################################
 
         classified = []
         curr_frame = curr_mfcc = 0
