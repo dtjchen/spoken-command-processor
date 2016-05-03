@@ -6,8 +6,7 @@ from . import utils, dataset
 
 
 def train(summarize=False, data_limit=None):
-    reader = dataset.TIMITReader('speech2phonemes')
-    X_train, y_train = reader.load_training_data(limit=data_limit)
+    X_train, y_train = dataset.Speech2Phonemes().load_train_data(limit=data_limit)
 
     # Number of features for each sample in X_train...
     # if each 20ms corresponds to 13 MFCC coefficients + delta + delta2, then 39
@@ -52,7 +51,7 @@ def train(summarize=False, data_limit=None):
 
 def test(data_limit=None):
     model = load_model()
-    X_test, y_test = dataset.load_test_data()
+    X_test, y_test = dataset.Speech2Phonemes().load_test_data()
 
     out = model.predict_classes(X_test,
         batch_size=256,
@@ -71,7 +70,7 @@ def predict(X_test):
     )
 
 def save_model(model):
-    reader = dataset.TIMITReader('speech2phonemes')
+    reader = dataset.Speech2Phonemes()
 
     with open(reader.params('speech2phonemes_arch', 'json'), 'w') as archf:
         archf.write(model.to_json())
@@ -82,11 +81,11 @@ def save_model(model):
     )
 
 def load_model():
-    reader = dataset.TIMITReader('speech2phonemes')
+    reader = dataset.Speech2Phonemes()
 
     with open(reader.params('speech2phonemes_arch', 'json')) as arch:
         model = model_from_json(arch.read())
-        model.load_weights(dataset.params('speech2phonemes_weights', 'h5'))
+        model.load_weights(reader.params('speech2phonemes_weights', 'h5'))
 
         model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.001))
         return model

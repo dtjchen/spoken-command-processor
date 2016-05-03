@@ -8,8 +8,8 @@ from sklearn import preprocessing
 from . import utils
 
 
-class TIMITReader:
-    def __init__(self, model_name):
+class TIMITReader(object):
+    def __init__(self):
         """
         Necessary env. vars.:
             - PROJECT_ROOT
@@ -19,16 +19,7 @@ class TIMITReader:
         """
         self.train_dataset_path = os.environ['TIMIT_TRAINING_PATH']
         self.test_dataset_path = os.environ['TIMIT_TESTING_PATH']
-
-        data_root = os.path.join(os.environ['PROJECT_ROOT'], 'model', 'data')
-
-        if model_name == 'speech2phonemes':
-            self.reader_func = self._read_labeled_wavfiles
-            self.data_dir = os.path.join(data_root, 'speech2phonemes')
-
-        elif model_name == 'phonemes2text':
-            self.reader_func = self._read_labeled_phnfiles
-            self.data_dir = os.path.join(data_root, 'phonemes2text')
+        self.data_root = os.path.join(os.environ['PROJECT_ROOT'], 'model', 'data')
 
     def params(self, name, ext='npy'):
         return os.path.join(self.data_dir, name + '.%s' % ext)
@@ -41,23 +32,17 @@ class TIMITReader:
         """
         print('Loading training data...')
 
-        if all(map(os.path.exists, [self.params('X_train'), self.params('y_train')])):
+        cached = [self.params('X_train'), self.params('y_train')]
+        if all(map(os.path.exists, cached)):
             print('Found .npy files for X_train and y_train. Loading...')
             X_train = np.load(self.params('X_train'))
             y_train = np.load(self.params('y_train'))
 
         else:
             print('Did not find .npy files for X_train and y_train. Parsing dataset...')
-            X_train_raw, y_train = self.reader_func(self.train_dataset_path)
+            X_train, y_train = self.normalize(
+                *self.reader(self.train_dataset_path))
 
-            print('Normalizing X_train around each MFCC coefficient\'s mean...')
-            scaler = preprocessing\
-                .StandardScaler(with_mean=True, with_std=False)\
-                .fit(X_train_raw)
-
-            X_train = scaler.transform(X_train_raw)
-
-            np.save(self.params('mfcc_means'), scaler.mean_)
             np.save(self.params('X_train'), X_train)
             np.save(self.params('y_train'), y_train)
 
@@ -74,20 +59,18 @@ class TIMITReader:
             X_test  --> [num_of_testing_mfcc_vectors, 20]
             y_test  --> [num_of_testing_mfcc_vectors, 1]
         """
-        if all(map(os.path.exists, [self.params('X_test'), self.params('y_test')])):
+        print('Loading testing data...')
+
+        cached = [self.params('X_test'), self.params('y_test')]
+        if all(map(os.path.exists, cached)):
             print('Found .npy files for X_test and y_test. Loading...')
             X_test = np.load(self.params('X_test'))
             y_test = np.load(self.params('y_test'))
 
         else:
             print('Did not find .npy files for X_test and y_test. Parsing dataset...')
-            X_test_raw, y_test = self.reader_func(self.test_dataset_path)
-
-            # Use the MFCC means from the training set to normalize X_train
-            scaler = preprocessing.StandardScaler(with_mean=True, with_std=False)
-            scaler.mean_ = np.load(self.params('mfcc_means'))
-
-            X_test = scaler.fit_transform(X_test_raw)
+            X_test, y_test = self.apply_normalizer(
+                *self.reader(self.test_dataset_path))
 
             np.save(self.params('X_test'), X_test)
             np.save(self.params('y_test'), y_test)
@@ -98,6 +81,45 @@ class TIMITReader:
             y_test = y_test[:limit]
 
         return X_test, y_test
+
+    def _parse_timit_line(self, line):
+        start_frame, end_frame, label = line.split(' ')
+
+        return int(start_frame), int(end_frame), label.strip('\n')
+
+    def load_unique_phonemes_as_class_numbers(self):
+        phonemes = {}
+
+        with open(os.environ['PHONE_LIST_PATH'], 'r') as f:
+            class_number = 0
+
+            for ph in map(lambda p: p.strip(), f.readlines()):
+                phonemes[ph] = class_number
+                class_number += 1
+
+        return phonemes
+
+    def load_unique_words_as_class_numbers(cls):
+        words = {}
+
+        with open(os.environ['WORD_LIST_PATH'], 'r') as f:
+            class_number = 0
+
+            for word in map(lambda w: w.strip(), f.readlines()):
+                words[word] = class_number
+                class_number += 1
+
+        return words
+
+class Speech2Phonemes(TIMITReader):
+    def __init__(self):
+        super(Speech2Phonemes, self).__init__()
+
+        self.reader = self._read_labeled_wavfiles
+        self.data_dir = os.path.join(self.data_root, 'speech2phonemes')
+
+        self.normalize = self._wavfile_normalize
+        self.apply_normalizer = self._wavfile_apply_normalizer
 
     def _read_labeled_wavfiles(self, root_timit_path):
         wavfiles = sorted(glob.glob(root_timit_path + '/*/*/*.WAV'))
@@ -164,9 +186,43 @@ class TIMITReader:
             curr_mfcc += 1
             curr_frame += hop_duration_frames
 
+    def _wavfile_normalize(self, X, y):
+        print('Normalizing X_train around each MFCC coefficient\'s mean...')
+        scaler = preprocessing\
+            .StandardScaler(with_mean=True, with_std=False)\
+            .fit(X)
+
+        np.save(self.params('mfcc_means'), scaler.mean_)
+        X = scaler.transform(X)
+        return X, y
+
+    def _wavfile_apply_normalizer(self, X, y):
+        # Use the MFCC means from the training set to normalize X_train
+        scaler = preprocessing.StandardScaler(with_mean=True, with_std=False)
+        scaler.mean_ = np.load(self.params('mfcc_means'))
+
+        X = scaler.fit_transform(X)
+        return X, y
+
+class Phonemes2Text(TIMITReader):
+    def __init__(self):
+        super(Phonemes2Text, self).__init__()
+
+        self.reader = self._read_labeled_phnfiles
+        self.data_dir = os.path.join(self.data_root, 'phonemes2text')
+
+        self.normalize = self._phnfile_normalize
+        self.apply_normalizer = self._phnfile_apply_normalizer
+
     def _read_labeled_phnfiles(self, root_timit_path):
         phn_files = sorted(glob.glob(root_timit_path + '/*/*/*.PHN'))
         word_files = sorted(glob.glob(root_timit_path + '/*/*/*.WRD'))
+
+        # Each phoneme is mapped to a class number
+        phoneme_classes = self.load_unique_phonemes_as_class_numbers()
+
+        # Used to get one-hot vectors for each phonemes; this gives its size (61)
+        num_distinct_phonemes = len(phoneme_classes)
 
         # Each word is mapped to a class number
         word_classes = self.load_unique_words_as_class_numbers()
@@ -182,35 +238,15 @@ class TIMITReader:
         # with 17... we'll go with a few more)
         num_phones_per_word = 25
 
-        X = np.zeros((num_samples, num_phones_per_word, num_distinct_words))
+        X = np.zeros((num_samples, num_phones_per_word, num_distinct_phonemes))
         y = np.zeros((num_samples, num_distinct_words))
 
-        """
-
-        print(X.shape)
-        print(y.shape)
-        exit()
-
-        X, y = [], []
-
-        maxsize = 0
-        fax = ""
-        num_words = 0
-        num_files = 0
-
+        """TODO
         for pf, wf in zip(phn_files, word_files):
-            num_files += 1
-
             for word, phones_in_word in self._read_labeled_phnfile(pf, wf):
-                num_words += 1
-
-                if len(phones_in_word) > maxsize:
-                    maxsize = len(phones_in_word)
-                    fax = word
-
-        print(fax, maxsize, num_words, num_files)
-        exit()
+                pass
         """
+        return X, y
 
     def _read_labeled_phnfile(self, phn_file, word_file):
         """Map each word to a list of phones (one phone per frame)"""
@@ -231,31 +267,8 @@ class TIMITReader:
 
                 yield label, phns
 
-    def _parse_timit_line(self, line):
-        start_frame, end_frame, label = line.split(' ')
+    def _phnfile_normalize(self, X, y):
+        return X, y
 
-        return int(start_frame), int(end_frame), label.strip('\n')
-
-    def load_unique_phonemes_as_class_numbers(self):
-        phonemes = {}
-
-        with open(os.environ['PHONE_LIST_PATH'], 'r') as f:
-            class_number = 0
-
-            for ph in map(lambda p: p.strip(), f.readlines()):
-                phonemes[ph] = class_number
-                class_number += 1
-
-        return phonemes
-
-    def load_unique_words_as_class_numbers(cls):
-        words = {}
-
-        with open(os.environ['WORD_LIST_PATH'], 'r') as f:
-            class_number = 0
-
-            for word in map(lambda w: w.strip(), f.readlines()):
-                words[word] = class_number
-                class_number += 1
-
-        return words
+    def _phnfile_apply_normalizer(self, X, y):
+        return X, y
