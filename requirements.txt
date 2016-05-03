@@ -1,4 +1,5 @@
 matplotlib==1.4.3
+Keras==1.0.1
 librosa
 scipy
 numpy
