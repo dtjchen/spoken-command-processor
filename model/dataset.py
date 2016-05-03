@@ -99,7 +99,7 @@ class TIMITReader(object):
 
         return phonemes
 
-    def load_unique_words_as_class_numbers(cls):
+    def load_unique_words_as_class_numbers(self):
         words = {}
 
         with open(os.environ['WORD_LIST_PATH'], 'r') as f:
@@ -221,31 +221,36 @@ class Phonemes2Text(TIMITReader):
         # Each phoneme is mapped to a class number
         phoneme_classes = self.load_unique_phonemes_as_class_numbers()
 
-        # Used to get one-hot vectors for each phonemes; this gives its size (61)
-        num_distinct_phonemes = len(phoneme_classes)
-
         # Each word is mapped to a class number
         word_classes = self.load_unique_words_as_class_numbers()
 
         # Used to get one-hot vectors for each word; this gives its size (4893)
         num_distinct_words = len(word_classes)
 
-        # Number of words disected into phonemes in TIMIT over 4620 files
-        # (some words are duplicates; i.e. different phoneme combinations)
-        num_samples = 39834
-
         # Max phonemes per word (in the dataset, the largest is "encyclopedias"
         # with 17... we'll go with a few more)
-        num_phones_per_word = 25
+        num_phonemes_per_word = 30
 
-        X = np.zeros((num_samples, num_phones_per_word, num_distinct_phonemes))
-        y = np.zeros((num_samples, num_distinct_words))
+        X, y = [], []
 
-        """TODO
         for pf, wf in zip(phn_files, word_files):
-            for word, phones_in_word in self._read_labeled_phnfile(pf, wf):
-                pass
-        """
+            for word, phonemes_in_word in self._read_labeled_phnfile(pf, wf):
+                pclasses = [phoneme_classes[p] for p in phonemes_in_word]
+
+                if pclasses:
+                    padded = np.zeros(num_phonemes_per_word)
+                    padded[range(len(pclasses))] = pclasses
+                    X.append(padded)
+
+                    onehot_word = np.zeros(num_distinct_words)
+                    onehot_word[word_classes[word]] = 1
+                    y.append(onehot_word)
+
+        # For the training data, these are the shapes
+        # (39826 is the number of samples, 30 is the number of phonemes per
+        # word and 6102 is the total number of words in the dataset):
+        X = np.array(X) # X.shape -> (39826, 30)
+        y = np.array(y) # y.shape -> (39826, 6102)
         return X, y
 
     def _read_labeled_phnfile(self, phn_file, word_file):
@@ -263,12 +268,14 @@ class Phonemes2Text(TIMITReader):
                 start_frame, end_frame, label = self._parse_timit_line(line)
 
                 with_repeats = phns[start_frame:end_frame]
-                phns = [k[0] for k in itertools.groupby(with_repeats)]
+                word_phns = [k[0] for k in itertools.groupby(with_repeats)]
 
-                yield label, phns
+                yield label, word_phns
 
     def _phnfile_normalize(self, X, y):
+        # No normalization taking place at the moment
         return X, y
 
     def _phnfile_apply_normalizer(self, X, y):
+        # No normalization taking place at the moment
         return X, y
