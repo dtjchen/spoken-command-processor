@@ -27,7 +27,7 @@ class TIMITReader(object):
     def load_train_data(self, limit=None):
         """
         For self.model == 'speech2phonemes', returns:
-            X_train --> [num_of_training_mfcc_vectors, 20]
+            X_train --> [num_of_training_mfcc_vectors, 39]
             y_train --> [num_of_training_mfcc_vectors, 1]
         """
         print('Loading training data...')
@@ -56,7 +56,7 @@ class TIMITReader(object):
     def load_test_data(self, limit=None):
         """
         For self.model == 'speech2phonemes', returns:
-            X_test  --> [num_of_testing_mfcc_vectors, 20]
+            X_test  --> [num_of_testing_mfcc_vectors, 39]
             y_test  --> [num_of_testing_mfcc_vectors, 1]
         """
         print('Loading testing data...')
@@ -165,20 +165,12 @@ class Speech2Phonemes(TIMITReader):
 
     def _wavfile_normalize(self, X, y):
         print('Normalizing X_train around each MFCC coefficient\'s mean...')
-        scaler = preprocessing\
-            .StandardScaler(with_mean=True, with_std=False)\
-            .fit(X)
-
-        np.save(self.params('mfcc_means'), scaler.mean_)
-        X = scaler.transform(X)
+        X = utils.normalize_mean(X, self.params('mfcc_means'))
         return X, y
 
     def _wavfile_apply_normalizer(self, X, y):
         # Use the MFCC means from the training set to normalize X_train
-        scaler = preprocessing.StandardScaler(with_mean=True, with_std=False)
-        scaler.mean_ = np.load(self.params('mfcc_means'))
-
-        X = scaler.fit_transform(X)
+        X = utils.apply_normalize_mean(X, self.params('mfcc_means'))
         return X, y
 
 class Phonemes2Text(TIMITReader):
