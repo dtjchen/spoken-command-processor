@@ -10,16 +10,9 @@ from . import utils
 
 class TIMITReader(object):
     def __init__(self):
-        """
-        Necessary env. vars.:
-            - PROJECT_ROOT
-            - TIMIT_TRAINING_PATH
-            - TIMIT_TESTING_PATH
-            - PHONE_LIST_PATH
-        """
         self.train_dataset_path = os.environ['TIMIT_TRAINING_PATH']
         self.test_dataset_path = os.environ['TIMIT_TESTING_PATH']
-        self.data_root = os.path.join(os.environ['PROJECT_ROOT'], 'model', 'data')
+        self.data_root = os.environ['MODEL_PARAMETERS']
 
     def params(self, name, ext='npy'):
         return os.path.join(self.data_dir, name + '.%s' % ext)

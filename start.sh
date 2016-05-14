@@ -4,6 +4,25 @@
 # http://stackoverflow.com/a/246128/2708484
 export PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+#################################
+# Config. environment variables #
+#################################
+
+# Path to the trained model's parameters
+export MODEL_PARAMETERS=$PROJECT_ROOT/volumes/model
+
+# Path to the list of phones in the data
+export PHONE_LIST_PATH=$PROJECT_ROOT/volumes/config/timit_phones.txt
+
+# Path to the list of words in the data
+export WORD_LIST_PATH=$PROJECT_ROOT/volumes/config/timit_words.txt
+
+# Paths to training and testing portions of the dataset
+if [ -z "$TIMIT_TRAINING_PATH" ] || [ -z "$TIMIT_TESTING_PATH" ]; then
+  echo "Set env. vars: TIMIT_TRAINING_PATH and TIMIT_TESTING_PATH."
+  return;
+fi
+
 ######################################
 # Add relevant modules to PYTHONPATH #
 ######################################
@@ -12,23 +31,3 @@ export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 for dir in $PROJECT_ROOT/*; do
   export PYTHONPATH=$PYTHONPATH:$dir
 done
-
-##############################
-# Set paths to training data #
-##############################
-export VOLUMES=$PWD/volumes
-export VOLUMES_LABELS=$VOLUMES/labels.txt
-export VOLUMES_META=$VOLUMES/meta.txt
-
-####################################################################
-# Read constants from $VOLUMES_META and set them as env. variables #
-####################################################################
-while read line; do
-    if [[ $line =~ ([A-Z_]+)=([0-9]+) ]]
-    then
-      constant_name=${BASH_REMATCH[1]}
-      constant_value=${BASH_REMATCH[2]}
-
-      export $constant_name=$constant_value
-    fi
-done < $VOLUMES_META
