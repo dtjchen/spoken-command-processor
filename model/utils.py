@@ -26,6 +26,9 @@ def onehot_matrix(samples_vec, num_classes):
     return onehot
 
 def wavfile_to_mfccs(wavfile):
+    """Returns a matrix of shape (*, 39), since there are 39 MFCCs (deltas
+    included for each 20ms segment in the wavfile).
+    """
     sampling_rate, frames = scipy.io.wavfile.read(wavfile)
 
     segment_duration_ms = 20
