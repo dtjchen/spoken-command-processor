@@ -15,3 +15,15 @@ def regulate(raw_phonemes, max_allowed):
     
     pass
 
+def filter_sequence(seq, min_combo=2):
+    # simple way
+    combos = [[k, len(list(g))] for k, g in groupby(seq)]
+    nseq = []
+    for combo in combos:
+        if combo[1] >= min_combo:
+            # preserve duplication for repeated filtering
+            nseq.extend([combo[0]]*combo[1])
+    return nseq
+
+def pad_list(seq, pad_val, max_len):
+    return seq + [pad_val] * (max_len - len(seq))
