@@ -11,4 +11,7 @@ def regulate(raw_phonemes, max_allowed):
         list of max_allowed elements encapsulating the "correct" phonemes; if
         the list is not filled, right-pad it with zeros.
     """
+    
+    
     pass
+
