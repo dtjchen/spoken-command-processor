@@ -38,6 +38,10 @@ _[plot of the loss function, discussion of the number of epochs]_
 
 _[limitations of tying the whole thing together + improvements]_
 
+#### Sources
+
+_[list of papers and blog posts we relied on for the implementation of the model]_
+
 ## Implementation
 
 ### Dataset
