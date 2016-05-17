@@ -23,6 +23,8 @@ if [ -z "$TIMIT_TRAINING_PATH" ] || [ -z "$TIMIT_TESTING_PATH" ]; then
   return;
 fi
 
+export TMP_RECORDING=$PROJECT_ROOT/tmp_recording.wav
+
 ######################################
 # Add relevant modules to PYTHONPATH #
 ######################################
