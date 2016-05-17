@@ -23,6 +23,8 @@ if [ -z "$TIMIT_TRAINING_PATH" ] || [ -z "$TIMIT_TESTING_PATH" ]; then
   return;
 fi
 
+# Path to a temporary wavfile that is created to transfer data from the
+# recorder to the model
 export TMP_RECORDING=$PROJECT_ROOT/tmp_recording.wav
 
 ######################################
