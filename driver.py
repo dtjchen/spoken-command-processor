@@ -1,7 +1,5 @@
 import sys, os
 import click
-import processor
-from model import speech2phonemes, phonemes2text
 
 
 DEBUG = True
@@ -11,11 +9,13 @@ def cli():
     pass
 
 @cli.command()
-@click.option('--data', default=None, help='size of the data used to train the model')
-@click.option('--summarize', default=False, help='plot the loss function')
+@click.option('--data', default=None, type=int, help='size of the data used to train the model')
+@click.option('--summarize', default=False, type=bool, help='plot the loss function')
 @click.argument('model')
 @click.argument('action')
 def model(**kwargs):
+    from model import speech2phonemes, phonemes2text
+
     if kwargs['model'] == 'speech2phonemes':
         if kwargs['action'] == 'train':
             click.echo('Training speech2phonemes...')
@@ -39,14 +39,19 @@ def model(**kwargs):
 
 @cli.command()
 def register(**kwargs):
+    import processor
     processor.register()
 
 @cli.command()
 def parse(**kwargs):
+    import processor
     processor.parse()
 
 
 if __name__ == '__main__':
+    # Obtain information about the commands via:
+    # python driver.py --help
+
     # Suppress stderr from the output
     if not DEBUG:
         null = open(os.devnull,'wb')
