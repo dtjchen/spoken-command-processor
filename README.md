@@ -1,4 +1,4 @@
-# Spoken Command Processor
+# Spoken Command Processor*
 
 Applications like Siri and Cortana allow users to specify directives by transcribing speech and mapping it to a series of known commands. For example, asking Siri "what song is this" and holding your phone close to the speaker that is playing the music will prompt it to send soundbytes of the song to its classification models.
 
@@ -11,12 +11,14 @@ The transcription model is formed by two submodels: the first maps 20-ms soundby
 Once a given neural network's architecture is defined, it is trained using the ubiquitous backpropagation algorithm, which implements the chain rule backwards to incrementally modify the "neurons" so as to reduce the error of the network.
 
 ![Backpropagation](docs/img/cs231n_backprop.png)
-(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/optimization-2/))
+
+_(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/optimization-2/))_
 
 Aside from the number of neurons in the network and the architecture of the layers, the engineer must choose an optimizer. A common choice is Stochastic Gradient Descent (SGD), but there are others that converge at different rates and achieve varying degrees of accuracy depending on the model.
 
 ![Optimizers](docs/img/cs231n_optimizers.gif)
-(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/neural-networks-3/))
+
+_(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/neural-networks-3/))_
 
 ### Speech2Phonemes
 
@@ -51,6 +53,14 @@ In order to extract relevant information from the input speech files, we decided
 Thirteen MFCC coefficients were chosen for the task, as seemed to be widely used in many implementations of speech recognition models. In addition, delta and delta-delta features (derivatives) corresponding to the thirteen MFCCs were appended to the vector to obtain additional information about the signal. These were calculated using the `librosa` library, through the `librosa.feature.mfcc` and `librosa.feature.delta` functions. The windows sizes and step sizes recommended were 25ms and 10ms, however, due to the smaller length of some uttered phones, the window size was chosen to be a bit smaller at 20ms as a compromise.
 
 With the sampling rate at 16 kHz for all the audio files, samples were less than a millisecond. From analysis of the data, according to the transcription, some phones were smaller than the window size. In addition, the start and end times of the utterances could mean that multiple phones could be represented in a window frame. To resolve this alignment issue, we simply took the phone that occupied the majority of the frame as the label for that frame.
+
+##### Normalization
+
+Before feeding the 39-MFCC-long vectors into the model, each coefficient was normalized around the mean of all coefficients with the same index in the training set. Normalization provides noticeable benefits as it adjusts the ranges of the values to be "symmetric" around the origin. Other normalization techniques, such as that which normalizes around the mean and divides by the standard deviation (thereby placing most data points within three standard deviations of the mean as exemplified by the normal distribution below), were tested.
+
+![Normal distribution](docs/img/normal_distribution.png)
+
+Nevertheless, the most effective technique for our application was to merely normalize around the mean (no division by the standard deviation).
 
 #### Training
 
@@ -134,15 +144,15 @@ This means that, in the first case, a 20-ms clip has a 47.4% chance of being cla
 
 ## Implementation
 
-### Dataset (derek)
+### Dataset
 
 The TIMIT dataset is an often used corpus developed by MIT, Stanford and Texas Instruments for training and testing automatic speech recognition systems. There are 6300 sentences spoken by 630 speakers (438 male, 192 female) with more than 6000 different words used. Speakers were chosen from 8 dialect regions of the United States, encompassing various geographical sections of the states. The dataset also had a suggested training/testing split, used to partition the data.
 
 The extensive labeling for the dataset made it a favorable one to use, as both phonetic and word labels for the speech files were provided with the data. Using those labels, we were able to perform framewise labeling and use this to train and test the data.
 
-### Keras
+### Keras*
 
-As stated, [Keras](https://github.com/fchollet/keras) is a deep learning library that provides a high-level interface to add customizable layers based on a series of hyperparameters built on top of other deep learning libraries.
+As stated, [Keras](https://github.com/fchollet/keras) is a deep learning library built on top of computational libraries that provides a high-level interface to add customizable layers based on a series of hyperparameters.
 
 > Keras is a minimalist, highly modular neural networks library, written in Python and capable of running on top of either TensorFlow or Theano. It was developed with a focus on enabling fast experimentation. Being able to go from idea to result with the least possible delay is key to doing good research.
 
@@ -170,17 +180,39 @@ The following output is from Redis' CLI:
 127.0.0.1:6379>
 ```
 
-### Click
+### Sockets*
+
+_[gafhasfhasfdadsfad]_
+
+### Installation
+
+Use a package manager (`apt-get`, `brew`, etc.) to install Redis and the system-level dependencies of PyAudio.
+
+Install the Python-specific libraries listed in `requirements.txt` through:
+
+```
+$ pip install -r requirements.txt
+```
+
+### CLI*
 
 Python's [Click library](http://click.pocoo.org/5/) was used to implement a command-line interface to the entire application (see `driver.py`). The commands it provides are:
 
 ```
 $ python driver.py --help
+```
 
+```
+$ python driver.py setlistener --port 23111
+```
+
+```
 $ python driver.py register
 
 $ python driver.py parse
+```
 
+```
 $ python driver.py model speech2phonemes train --data 10000 --summarize True
 
 $ python driver.py model speech2phonemes test
