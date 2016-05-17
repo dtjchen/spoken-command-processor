@@ -41,12 +41,12 @@ def record_input(save=True, wavfile="input.wav"):
         # if input not loud enough, ignore
         if not start_rec and max(input_tuple) > THRESHOLD:
             start_rec = True
-            print("Start record...")
+            print(">>> start record...")
         if start_rec:
             frames.append(input_string)
             bn += 1
 
-    print("Finish record.")
+    print(">>> finish record.")
     stream.stop_stream()
     stream.close()
     p.terminate()
