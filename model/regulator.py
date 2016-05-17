@@ -1,3 +1,4 @@
+import numpy as np
 from itertools import groupby
 
 def regulate(raw_phonemes, max_allowed):
@@ -15,9 +16,9 @@ def regulate(raw_phonemes, max_allowed):
     # remove single values
     seq = filter_sequence(raw_phonemes)
     reg_phonemes = [k[0] for k in groupby(seq)]
-    
+
     # does not yet address if sequence is too long (truncate? filter with min_combo = 3?)
-    return pad_list(reg_phonemes, 0, max_allowed)
+    return np.array(pad_list(reg_phonemes, 0, max_allowed)[:max_allowed])
 
 def filter_sequence(seq, min_combo=2):
     # simple way
@@ -26,7 +27,7 @@ def filter_sequence(seq, min_combo=2):
     nseq = []
     for combo in combos:
         if combo[1] >= min_combo:
-            # preserve duplication for repeated filtering 
+            # preserve duplication for repeated filtering
             nseq.extend([combo[0]]*combo[1])
     return nseq
 

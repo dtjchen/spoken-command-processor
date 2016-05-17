@@ -17,4 +17,15 @@ def predict(recording):
     Returns:
         list of predicted words
     """
-    pass
+    # recording.shape = (mfcc_series, 39)
+
+    # Get the phonemes matching each MFCC group (of 20ms)
+    # phonemes.shape = (mfcc_series, 1)
+    phonemes = speech2phonemes.predict(recording.transpose())
+    nphonemes = dataset.Speech2Phonemes()._wavfile_apply_normalizer(phonemes)[0]
+
+    # Group the phonemes into a word
+    rphonemes = regulator.regulate(nphonemes, max_allowed=30).reshape((1, 30))
+    word = phonemes2text.predict(rphonemes)
+
+    return word

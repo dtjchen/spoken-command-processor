@@ -161,7 +161,7 @@ class Speech2Phonemes(TIMITReader):
         X = utils.normalize_mean(X, self.params('mfcc_means'))
         return X, y
 
-    def _wavfile_apply_normalizer(self, X, y):
+    def _wavfile_apply_normalizer(self, X, y=None):
         # Use the MFCC means from the training set to normalize X_train
         X = utils.apply_normalize_mean(X, self.params('mfcc_means'))
         return X, y

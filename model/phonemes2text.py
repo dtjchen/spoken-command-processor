@@ -66,10 +66,13 @@ def test(data_limit=None):
 def predict(X_test):
     model = load_model()
 
-    return model.predict_classes(X_test,
+    predicted_classes = model.predict_classes(X_test,
         batch_size=256,
         verbose=0
     )
+
+    class_numbers = dataset.TIMITReader().load_unique_words_as_class_numbers()
+    return [k for k,v in class_numbers.items() if v in predicted_classes]
 
 def save_model(model):
     reader = dataset.Phonemes2Text()
