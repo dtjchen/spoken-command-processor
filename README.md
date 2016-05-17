@@ -58,6 +58,8 @@ _[accessible deep learning library in terms of flexibility and the statistics it
 
 _[description of the bells-n-whistles]_
 
+_[edit_distance algorithm]_
+
 ### Redis (miguel)
 
 _[database used to store and retrieve the user commands]_
