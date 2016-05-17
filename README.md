@@ -12,17 +12,17 @@ Once a given neural network's architecture is defined, it is trained using the u
 
 <p align="center">
 <img src="docs/img/cs231n_backprop.png" alt="Backpropagation">
+<br>
+<i>Source: Stanford University's <a href="http://cs231n.github.io/optimization-2/">CS231n: "Convolutional Neural Networks for Visual Recognition"</a></i>
 </p>
-
-_(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/optimization-2/))_
 
 Aside from the number of neurons in the network and the architecture of the layers, the engineer must choose an optimizer. A common choice is Stochastic Gradient Descent (SGD), but there are others that converge at different rates and achieve varying degrees of accuracy depending on the model.
 
 <p align="center">
 <img src="docs/img/cs231n_optimizers.gif" alt="Optimizers">
+<br>
+<i>Source: Stanford University's <a href="http://cs231n.github.io/neural-networks-3/">CS231n: "Convolutional Neural Networks for Visual Recognition"</a></i>
 </p>
-
-_(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/neural-networks-3/))_
 
 ### Speech2Phonemes
 
@@ -64,6 +64,8 @@ Before feeding the 39-MFCC-long vectors into the model, each coefficient was nor
 
 <p align="center">
 <img src="docs/img/normal_distribution.png" alt="Normal distribution">
+<br>
+<i>Source: Wikipedia's <a href="https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule">"68–95–99.7 rule"</a></i>
 </p>
 
 Nevertheless, the most effective technique for our application was to merely normalize around the mean (no division by the standard deviation).
@@ -74,6 +76,8 @@ As would be expected in training, a loss is calculated for each interval of trai
 
 <p align="center">
 <img src="docs/img/speech2phonemes_loss.png" alt="Loss function">
+<br>
+<i>Speech2Phonemes' loss function</i>
 </p>
 
 ### Phonemes2Text
