@@ -34,7 +34,7 @@ def record_input(save=True, wavfile="input.wav"):
     # block reading
     bn, start_rec = 0, False
     frames = []
-    print("Start recording...")
+    print(">>> start recording...")
     while bn < BLOCKS:
         # Read audio by block, convert
         input_string = stream.read(BLOCKSIZE)
@@ -42,8 +42,7 @@ def record_input(save=True, wavfile="input.wav"):
         # if input not loud enough, ignore
         if not start_rec and max(input_tuple) > THRESHOLD:
             start_rec = True
-            print(">>> start record...")
-            print("Threshold met!")
+            print(">>> threshold met!")
 
         if start_rec:
             frames.append(input_string)
