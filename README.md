@@ -60,6 +60,8 @@ _[description of the bells-n-whistles]_
 
 _[edit_distance algorithm]_
 
+### Sockets
+
 ### Redis (miguel)
 
 _[database used to store and retrieve the user commands]_
