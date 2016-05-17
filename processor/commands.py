@@ -48,7 +48,7 @@ class UserCommand(object):
             message = r.hmget(key, 'message')[0]
             port = r.hmget(key, 'port')[0]
 
-            yield message, port
+            yield message, int(port)
 
     @classmethod
     def db_conn(cls):
@@ -93,13 +93,13 @@ def parse():
         print('>>> confirm your message:')
 
         for count, match in enumerate(matches):
-            print('>>>\t%d:\tPORT: %s \tMESSAGE: %s' % (count, match[1], match[0]))
+            print('>>>\t%d:\tPORT: %d \tMESSAGE: %s' % (count, match[1], match[0]))
 
         chosen_input = int(raw_input('>>> choice: '))
         if chosen_input >= len(matches):
             print('>>> invalid choice; ending.\n')
             return
 
-        port, message = matches[chosen_input]
-        messaging.send(message, port)
-        print('>>> sending: PORT: %s, MESSAGE %s\n' % (port, message))
+        message, port = matches[chosen_input]
+        if messaging.send(message, port):
+            print('>>> sending: PORT: %d, MESSAGE %s\n' % (port, message))
