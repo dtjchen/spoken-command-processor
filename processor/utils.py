@@ -1,17 +1,36 @@
 
 
 def edit_distance(s1, s2):
-    """http://stackoverflow.com/a/32558749/2708484"""
-    if len(s1) > len(s2):
-        s1, s2 = s2, s1
+    """Calculates the Levenshtein distance between two strings."""
+    if s1 == s2: # if equal, then distance is zero
+        return 0
 
-    distances = range(len(s1) + 1)
-    for i2, c2 in enumerate(s2):
-        distances_ = [i2+1]
-        for i1, c1 in enumerate(s1):
-            if c1 == c2:
-                distances_.append(distances[i1])
-            else:
-                distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
-        distances = distances_
-    return distances[-1]
+    m, n = len(s1), len(s2)
+
+    # if one string is empty, then distance is the length of the other string
+    if not s1:
+        return n
+    elif not s2:
+        return m
+
+    # originally matrix of distances: size (m+1) by (n+1)
+    # ds[i, j] has dist for first i chars of s1 and first j chars of s2
+    # ds = np.zeros((m+1, n+1), dtype=np.int32)
+
+    # optimization: use only two rows (c & d) at a time (working down)
+    c = None
+    d = range(n+1) # s1 to empty string by j deletions
+
+    for i in range(1, m+1):
+        # move current row to previous row
+        # create new row, index 0: t to empty string by i deletions, rest 0
+        c, d = d, [i]+[0]*n
+
+        # calculate dists for current row
+        for j in range(1, n+1):
+            sub_cost = int(s1[i-1] != s2[j-1])
+            d[j] = min(c[j] + 1,           # deletion
+                       d[j-1] + 1,         # insertion
+                       c[j-1] + sub_cost)  # substitution
+
+    return d[n]
