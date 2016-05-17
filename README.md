@@ -1,12 +1,14 @@
-# Spoken Command Processor
+# Spoken Command Processor (miguel)
 
 _[description of the project: its objectives and high-level functionality of this prototype]_
 
-## Transcription Model Architecture
+## Transcription Model Architecture (miguel)
 
 _[description and architecture of the model]_
 
-### Speech2Phonemes
+_[backpropagation]_
+
+### Speech2Phonemes (derek)
 
 #### Architecture
 
@@ -20,7 +22,7 @@ _[why the delta MFCC features (as opposed to not delta) + the size of the result
 
 _[plot of the loss function, discussion of the number of epochs]_
 
-### Phonemes2Text
+### Phonemes2Text (miguel)
 
 #### Architecture
 
@@ -44,7 +46,7 @@ _[list of papers and blog posts we relied on for the implementation of the model
 
 ## Implementation
 
-### Dataset
+### Dataset (derek)
 
 _[TIMIT and what it offers in terms of words, phonemes, wavfiles tagged frame-by-frame, sampling rate]_
 
@@ -56,10 +58,10 @@ _[accessible deep learning library in terms of flexibility and the statistics it
 
 _[description of the bells-n-whistles]_
 
-### Redis
+### Redis (miguel)
 
 _[database used to store and retrieve the user commands]_
 
-### Click
+### Click (miguel)
 
 _[command-line interface]_
