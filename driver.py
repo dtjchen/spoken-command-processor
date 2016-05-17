@@ -2,7 +2,7 @@ import sys, os
 import click
 
 
-DEBUG = True
+DEBUG = False
 
 @click.group()
 def cli():
@@ -39,13 +39,20 @@ def model(**kwargs):
 
 @cli.command()
 def register(**kwargs):
-    import processor
-    processor.register()
+    from processor import commands
+    commands.register()
 
 @cli.command()
 def parse(**kwargs):
-    import processor
-    processor.parse()
+    from processor import commands
+    commands.parse()
+
+@cli.command()
+@click.option('--port', type=int, help='listener port')
+def setlistener(**kwargs):
+    from processor import messaging
+    click.echo('Listening on port %d...' % kwargs['port'])
+    messaging.listen(kwargs['port'])
 
 
 if __name__ == '__main__':
