@@ -1,28 +1,56 @@
 import sys, os
-
-from model import speech2phonemes, phonemes2text
-from model import dataset
+import click
 import processor
+from model import speech2phonemes, phonemes2text
 
 
-# Suppress stderr from the output
-null = open(os.devnull,'wb')
-sys.stderr = null
+DEBUG = True
 
+@click.group()
+def cli():
+    pass
 
-def test_speech2phonemes():
-    #speech2phonemes.train(summarize=True, data_limit=100000)
-    speech2phonemes.test()
+@cli.command()
+@click.option('--data', default=None, help='size of the data used to train the model')
+@click.option('--summarize', default=False, help='plot the loss function')
+@click.argument('model')
+@click.argument('action')
+def model(**kwargs):
+    if kwargs['model'] == 'speech2phonemes':
+        if kwargs['action'] == 'train':
+            click.echo('Training speech2phonemes...')
+            speech2phonemes.train(summarize=kwargs['summarize'], data_limit=kwargs['data'])
 
-def test_phonemes2text():
-    #phonemes2text.train(summarize=False, data_limit=None)
-    phonemes2text.test()
+        elif kwargs['action'] == 'test':
+            click.echo('Testing speech2phonemes...')
+            speech2phonemes.test()
+
+    elif kwargs['model'] == 'phonemes2text':
+        if kwargs['action'] == 'train':
+            click.echo('Training phonemes2text...')
+            phonemes2text.train(summarize=kwargs['summarize'], data_limit=kwargs['data'])
+
+        elif kwargs['action'] == 'test':
+            click.echo('Testing phonemes2text...')
+            phonemes2text.test()
+
+    else:
+        click.echo('Unrecognized model: %s' % kwargs['model'])
+
+@cli.command()
+def register(**kwargs):
+    processor.register()
+
+@cli.command()
+def parse(**kwargs):
+    processor.parse()
 
 
 if __name__ == '__main__':
-    #test_speech2phonemes()
-    #test_phonemes2text()
-    #processor.register()
+    # Suppress stderr from the output
+    if not DEBUG:
+        null = open(os.devnull,'wb')
+        sys.stderr = null
 
-    #processor.register()
-    processor.parse()
+    # Activate the command-line interface
+    cli()
