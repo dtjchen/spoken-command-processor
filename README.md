@@ -8,6 +8,18 @@ _[description and architecture of the model]_
 
 _[backpropagation]_
 
+The transcription model is formed by two submodels: the first maps 20-ms soundbytes to individual phonemes and the second groups those phonemes into words from its dictionary (see `model/__init__.py`). The models are feed-forward neural networks built using the Keras deep learning library, which provides a high-level API to chain layers sequentially.
+
+Once a given neural network's architecture is defined, it is trained using the ubiquitous backpropagation algorithm, which implements the chain rule backwards to incrementally modify the "neurons" so as to reduce the error of the network.
+
+![Backpropagation](docs/img/cs231n_backprop.png)
+(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/optimization-2/))
+
+Aside from the number of neurons in the network and the architecture of the layers, the engineer must choose an optimizer. A common choice is Stochastic Gradient Descent (SGD), but there are others that converge at different rates and achieve varying degrees of accuracy depending on the model.
+
+![Optimizers](docs/img/cs231n_optimizers.gif)
+(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/neural-networks-3/))
+
 ### Speech2Phonemes (derek)
 
 #### Architecture
@@ -48,9 +60,9 @@ With the sampling rate at 16 kHz for all the audio files, samples were less than
 
 #### Training
 
-_[plot of the loss function, discussion of the number of epochs]_
-
 As would be expected in training, a loss is calculated for each interval of training (an epoch) which should be minimized in order to obtain more accurate results. As can be seen through the loss function, this gradually decreases, and generally more epochs would result in a better trained model. Obvious constraints for training would be the time it takes to train the model, which makes MLPs slightly easy to deal with (as opposed to RNNs, and other architectures). In addition, overfitting for the training data might occur with too many epochs.
+
+![Plot of the loss function](docs/img/speech2phonemes_loss.png)
 
 ### Phonemes2Text (miguel)
 
@@ -58,17 +70,74 @@ As would be expected in training, a loss is calculated for each interval of trai
 
 _[arbitrary parameter choices, etc.]_
 
+The second model, "Phonemes2Text", accepts a series of phonemes and attempts to classify it as any of the words used by the dataset. Like its previous counterpart, it is a feed-forward neural network characterized by a series of dense, sigmoid activation and dropout layers. The output dimension parameter of the first layer, 1500, was determined empirically to give the best results. For 20 epochs, a change in this parameter from 256 to 1500 improved the accuracy by 16.8%.
+
+```
+____________________________________________________________________________________________________
+Layer (type)                       Output Shape        Param #     Connected to                     
+====================================================================================================
+dense_1 (Dense)                    (None, 1500)        46500       dense_input_1[0][0]              
+____________________________________________________________________________________________________
+activation_1 (Activation)          (None, 1500)        0           dense_1[0][0]                    
+____________________________________________________________________________________________________
+dropout_1 (Dropout)                (None, 1500)        0           activation_1[0][0]               
+____________________________________________________________________________________________________
+dense_2 (Dense)                    (None, 6102)        9159102     dropout_1[0][0]                  
+____________________________________________________________________________________________________
+activation_2 (Activation)          (None, 6102)        0           dense_2[0][0]                    
+____________________________________________________________________________________________________
+dropout_2 (Dropout)                (None, 6102)        0           activation_2[0][0]               
+____________________________________________________________________________________________________
+dense_3 (Dense)                    (None, 6102)        37240506    dropout_2[0][0]                  
+____________________________________________________________________________________________________
+activation_3 (Activation)          (None, 6102)        0           dense_3[0][0]                    
+====================================================================================================
+Total params: 46446108
+____________________________________________________________________________________________________
+```
+
 #### Features
 
 _[also describe the bridge between Speech2Phonemes and Phonemes2Text]_
+
+The phonemes are provided as a list of class numbers ranging from 0-61 (the total number of phonemes), accompanied by a one-hot vector denoting the word in a vocabulary of 6102 –see the words on `volumes/config/timit_words`. For 39826 series of phonemes –each of which corresponded to one word, the shapes of the matrices used to train the model are as follows:
+
+```
+X_train.shape = (39826, 30)
+y_train.shape = (39826, 6102)
+```
+
+We make the assumption that a word will be composed of at most 30 phonemes, and right-pad the words with fewer phonemes with zeros. This seems valid, given that the longest word in the dataset contained 17 phonemes.
 
 #### Training
 
 _[plot of the loss function, discussion of the number of epochs]_
 
+The neural network was trained on a CPU (a slow process) using 50 epochs. The loss function started off at 5.6256 and, notably, decreased to 0.6436, using the Adam optimizer and a learning rate of 0.001 –a value that was greater by a factor of 10 was attempted to speed up the learning process but, unfortunately, the model did not converge (the loss function sky-rocketed).
+
+```
+Epoch 1/50
+39826/39826 [==============================] - 186s - loss: 5.6256     
+Epoch 2/50
+39826/39826 [==============================] - 193s - loss: 4.2672     
+...  
+Epoch 49/50
+39826/39826 [==============================] - 262s - loss: 0.6437     
+Epoch 50/50
+39826/39826 [==============================] - 264s - loss: 0.6436
+```
+
 ### End-to-End
 
 _[limitations of tying the whole thing together + improvements]_
+
+The two models were trained independently using data from TIMIT (1.4M and 38K samples, respectively). In order to tie the output from the first (individual phonemes) to the second (groups of phonemes from which words may be classified), a regulation scheme displayed by `model/regulator.py` was developed to remove duplicate phonemes and reduce the impact of the noise. The former algorithm would successfully trim a series e.g. `['a', 'a', 'a', 'b', 'b']` to `['a', 'b']`, and the latter assumed that a correct phoneme would appear at least "a few times" during a 20-ms period wherein one is captured for every frame.
+
+The accuracies of the two models, trained separately, were:
+- "Speech2Phonemes": 47.4%
+- "Phonemes2Text": 60.7%
+
+This means that, in the first case, a 20-ms clip has a 47.4% chance of being classified as the correct phoneme (out of 61) and, in the second, a series of phonemes has a 60.7% chance of being classified as the correct word (out of 6102). This assumption, however, is not expected to hold for the end-to-end scheme, wherein the inputs to the second model contain non-negligible levels of noise.
 
 #### Sources
 
@@ -93,7 +162,7 @@ _[accessible deep learning library in terms of flexibility and the statistics it
 _[description of the bells-n-whistles]_
 
 _[edit_distance algorithm]_
-To attempt to match the similarity of strings, an edit distance metric is used. One such metric is the Levenshtein distance, which measures the distance between two words as the minimum number of single-character edits (insertions, deletions and substitutions) needed to go from one string to the other. This can be efficiently implemented through a dynamic programming algorithm. 
+To attempt to match the similarity of strings, an edit distance metric is used. One such metric is the Levenshtein distance, which measures the distance between two words as the minimum number of single-character edits (insertions, deletions and substitutions) needed to go from one string to the other. This can be efficiently implemented through a dynamic programming algorithm.
 
 ### Sockets
 
