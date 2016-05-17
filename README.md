@@ -1,12 +1,10 @@
-# Spoken Command Processor (miguel)
+# Spoken Command Processor
 
-_[description of the project: its objectives and high-level functionality of this prototype]_
+Applications like Siri and Cortana allow users to specify directives by transcribing speech and mapping it to a series of known commands. For example, asking Siri "what song is this" and holding your phone close to the speaker that is playing the music will prompt it to send soundbytes of the song to its classification models.
 
-## Transcription Model Architecture (miguel)
+We attempted a similar effect by implementing a mechanism that records a user's spoken command (in our case, a single word) and maps it to a directive that may be sent to any given destination. For instance, the user may record the word "lights" and instruct the service to send a message with "keeplightson" to a remote server that listens for such commands. Consequently, the user would be able to test the system at a later time by repeating the same word and expecting the server to perform the relevant task.
 
-_[description and architecture of the model]_
-
-_[backpropagation]_
+## Transcription Model Architecture
 
 The transcription model is formed by two submodels: the first maps 20-ms soundbytes to individual phonemes and the second groups those phonemes into words from its dictionary (see `model/__init__.py`). The models are feed-forward neural networks built using the Keras deep learning library, which provides a high-level API to chain layers sequentially.
 
@@ -20,11 +18,9 @@ Aside from the number of neurons in the network and the architecture of the laye
 ![Optimizers](docs/img/cs231n_optimizers.gif)
 (Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/neural-networks-3/))
 
-### Speech2Phonemes (derek)
+### Speech2Phonemes
 
 #### Architecture
-
-_[arbitrary parameter choices, etc.]_
 
 The first model, "Speech2Phonemes," attempts the task of framewise phoneme classification. The process involves associating a sequence of speech frames to phoneme labels matched to those frames. Ideally, this would be a first step to achieving a speech recognition model able to recognize an arbitrary number of words by piecing together phonemes.
 
@@ -50,8 +46,6 @@ ________________________________________________________________________________
 
 #### Features
 
-_[why the delta MFCC features (as opposed to not delta) + the size of the resulting vectors characterizing 20ms intervals, etc.]_
-
 In order to extract relevant information from the input speech files, we decided to use MFCC feature vectors. MFCCs are commonly used for speech recognition tasks because of its relative accuracy in revealing patterns in human speech. The Mel scale was created to more closely mimic what humans hear, as we are generally better at distinguishing between changes at lower frequencies than at higher frequencies. Expressing the speech signal as a series of vectors is also more ideal for processing the data.
 
 Thirteen MFCC coefficients were chosen for the task, as seemed to be widely used in many implementations of speech recognition models. In addition, delta and delta-delta features (derivatives) corresponding to the thirteen MFCCs were appended to the vector to obtain additional information about the signal. These were calculated using the `librosa` library, through the `librosa.feature.mfcc` and `librosa.feature.delta` functions. The windows sizes and step sizes recommended were 25ms and 10ms, however, due to the smaller length of some uttered phones, the window size was chosen to be a bit smaller at 20ms as a compromise.
@@ -64,11 +58,9 @@ As would be expected in training, a loss is calculated for each interval of trai
 
 ![Plot of the loss function](docs/img/speech2phonemes_loss.png)
 
-### Phonemes2Text (miguel)
+### Phonemes2Text
 
 #### Architecture
-
-_[arbitrary parameter choices, etc.]_
 
 The second model, "Phonemes2Text", accepts a series of phonemes and attempts to classify it as any of the words used by the dataset. Like its previous counterpart, it is a feed-forward neural network characterized by a series of dense, sigmoid activation and dropout layers. The output dimension parameter of the first layer, 1500, was determined empirically to give the best results. For 20 epochs, a change in this parameter from 256 to 1500 improved the accuracy by 16.8%.
 
@@ -98,8 +90,6 @@ ________________________________________________________________________________
 
 #### Features
 
-_[also describe the bridge between Speech2Phonemes and Phonemes2Text]_
-
 The phonemes are provided as a list of class numbers ranging from 0-61 (the total number of phonemes), accompanied by a one-hot vector denoting the word in a vocabulary of 6102 –see the words on `volumes/config/timit_words`. For 39826 series of phonemes –each of which corresponded to one word, the shapes of the matrices used to train the model are as follows:
 
 ```
@@ -110,8 +100,6 @@ y_train.shape = (39826, 6102)
 We make the assumption that a word will be composed of at most 30 phonemes, and right-pad the words with fewer phonemes with zeros. This seems valid, given that the longest word in the dataset contained 17 phonemes.
 
 #### Training
-
-_[plot of the loss function, discussion of the number of epochs]_
 
 The neural network was trained on a CPU (a slow process) using 50 epochs. The loss function started off at 5.6256 and, notably, decreased to 0.6436, using the Adam optimizer and a learning rate of 0.001 –a value that was greater by a factor of 10 was attempted to speed up the learning process but, unfortunately, the model did not converge (the loss function sky-rocketed).
 
@@ -129,8 +117,6 @@ Epoch 50/50
 
 ### End-to-End
 
-_[limitations of tying the whole thing together + improvements]_
-
 The two models were trained independently using data from TIMIT (1.4M and 38K samples, respectively). In order to tie the output from the first (individual phonemes) to the second (groups of phonemes from which words may be classified), a regulation scheme displayed by `model/regulator.py` was developed to remove duplicate phonemes and reduce the impact of the noise. The former algorithm would successfully trim a series e.g. `['a', 'a', 'a', 'b', 'b']` to `['a', 'b']`, and the latter assumed that a correct phoneme would appear at least "a few times" during a 20-ms period wherein one is captured for every frame.
 
 The accuracies of the two models, trained separately, were:
@@ -141,13 +127,14 @@ This means that, in the first case, a 20-ms clip has a 47.4% chance of being cla
 
 #### Sources
 
-_[list of papers and blog posts we relied on for the implementation of the model]_
+- http://andrew.gibiansky.com/blog/machine-learning/recurrent-neural-networks/
+- http://www.cs.toronto.edu/~fritz/absps/RNN13.pdf
+- http://karpathy.github.io/2015/05/21/rnn-effectiveness/
+- https://gist.github.com/karpathy/d4dee566867f8291f086
 
 ## Implementation
 
 ### Dataset (derek)
-
-_[TIMIT and what it offers in terms of words, phonemes, wavfiles tagged frame-by-frame, sampling rate]_
 
 The TIMIT dataset is an often used corpus developed by MIT, Stanford and Texas Instruments for training and testing automatic speech recognition systems. There are 6300 sentences spoken by 630 speakers (438 male, 192 female) with more than 6000 different words used. Speakers were chosen from 8 dialect regions of the United States, encompassing various geographical sections of the states. The dataset also had a suggested training/testing split, used to partition the data.
 
@@ -155,21 +142,50 @@ The extensive labeling for the dataset made it a favorable one to use, as both p
 
 ### Keras
 
-_[accessible deep learning library in terms of flexibility and the statistics it provides to gauge training, use of numpy]_
+As stated, [Keras](https://github.com/fchollet/keras) is a deep learning library that provides a high-level interface to add customizable layers based on a series of hyperparameters built on top of other deep learning libraries.
+
+> Keras is a minimalist, highly modular neural networks library, written in Python and capable of running on top of either TensorFlow or Theano. It was developed with a focus on enabling fast experimentation. Being able to go from idea to result with the least possible delay is key to doing good research.
+
+It provides a rich toolset to analyze the performance of an architecture.
 
 ## Command Interpreter
 
-_[description of the bells-n-whistles]_
-
-_[edit_distance algorithm]_
 To attempt to match the similarity of strings, an edit distance metric is used. One such metric is the Levenshtein distance, which measures the distance between two words as the minimum number of single-character edits (insertions, deletions and substitutions) needed to go from one string to the other. This can be efficiently implemented through a dynamic programming algorithm.
 
-### Sockets
+### Redis
 
-### Redis (miguel)
+The data of the application is stored in [Redis](http://redis.io/), a popular in-memory database that saves objects to the disk. The main data structure that is used is a hash, which maps usernames and their respective commands to a series of additional information, namely their chosen messages and ports.
 
-_[database used to store and retrieve the user commands]_
+The following output is from Redis' CLI:
 
-### Click (miguel)
+```bash
+172-16-9-92:mamigot speech-analysis$ redis-cli
+127.0.0.1:6379> keys derek:*
+1) "derek:ping"
+2) "derek:lights"
+127.0.0.1:6379> hmget derek:ping message
+1) "keep alive hello"
+127.0.0.1:6379> hmget derek:ping port
+1) "13002"
+127.0.0.1:6379>
+```
 
-_[command-line interface]_
+### Click
+
+Python's [Click library](http://click.pocoo.org/5/) was used to implement a command-line interface to the entire application (see `driver.py`). The commands it provides are:
+
+```
+$ python driver.py --help
+
+$ python driver.py register
+
+$ python driver.py parse
+
+$ python driver.py model speech2phonemes train --data 10000 --summarize True
+
+$ python driver.py model speech2phonemes test
+
+$ python driver.py model phonemes2text train --data 1000
+
+$ python driver.py model phonemes2text test
+```
