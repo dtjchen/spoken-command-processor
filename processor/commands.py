@@ -93,10 +93,10 @@ def parse():
         print('>>> confirm your message:')
 
         for count, match in enumerate(matches):
-            print('>>>\t%d: PORT: %s, MESSAGE %s' % (count, match[1], match[0]))
+            print('>>>\t%d:\tPORT: %s \tMESSAGE: %s' % (count, match[1], match[0]))
 
         chosen_input = int(raw_input('>>> choice: '))
-        if chosen_input > len(matches):
+        if chosen_input >= len(matches):
             print('>>> invalid choice; ending.\n')
             return
 
