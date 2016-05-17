@@ -15,7 +15,7 @@ RATE = 16000      	# Sampling rate (samples/second)
 BLOCKSIZE = 1024
 DURATION = 2        # Duration in seconds
 BLOCKS = int(DURATION * RATE / BLOCKSIZE)
-THRESHOLD = 200
+THRESHOLD = 8000
 
 def record_input(save=True, wavfile="input.wav"):
     # Open audio device
@@ -53,7 +53,7 @@ def record_input(save=True, wavfile="input.wav"):
 
     if save:
         write_wavfile(frames, wavfile)
-    return frames
+    return frames, wavfile
 
 def write_wavfile(frames, wavfile):
     wf = wave.open(wavfile, 'wb')
