@@ -10,13 +10,17 @@ The transcription model is formed by two submodels: the first maps 20-ms soundby
 
 Once a given neural network's architecture is defined, it is trained using the ubiquitous backpropagation algorithm, which implements the chain rule backwards to incrementally modify the "neurons" so as to reduce the error of the network.
 
-![Backpropagation](docs/img/cs231n_backprop.png)
+<p align="center">
+<img src="docs/img/cs231n_backprop.png" alt="Backpropagation">
+</p>
 
 _(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/optimization-2/))_
 
 Aside from the number of neurons in the network and the architecture of the layers, the engineer must choose an optimizer. A common choice is Stochastic Gradient Descent (SGD), but there are others that converge at different rates and achieve varying degrees of accuracy depending on the model.
 
-![Optimizers](docs/img/cs231n_optimizers.gif)
+<p align="center">
+<img src="docs/img/cs231n_optimizers.gif" alt="Optimizers">
+</p>
 
 _(Source: Stanford University's [CS231n: "Convolutional Neural Networks for Visual Recognition"](http://cs231n.github.io/neural-networks-3/))_
 
@@ -58,7 +62,9 @@ With the sampling rate at 16 kHz for all the audio files, samples were less than
 
 Before feeding the 39-MFCC-long vectors into the model, each coefficient was normalized around the mean of all coefficients with the same index in the training set. Normalization provides noticeable benefits as it adjusts the ranges of the values to be "symmetric" around the origin. Other normalization techniques, such as that which normalizes around the mean and divides by the standard deviation (thereby placing most data points within three standard deviations of the mean as exemplified by the normal distribution below), were tested.
 
-![Normal distribution](docs/img/normal_distribution.png)
+<p align="center">
+<img src="docs/img/normal_distribution.png" alt="Normal distribution">
+</p>
 
 Nevertheless, the most effective technique for our application was to merely normalize around the mean (no division by the standard deviation).
 
@@ -66,7 +72,9 @@ Nevertheless, the most effective technique for our application was to merely nor
 
 As would be expected in training, a loss is calculated for each interval of training (an epoch) which should be minimized in order to obtain more accurate results. As can be seen through the loss function, this gradually decreases, and generally more epochs would result in a better trained model. Obvious constraints for training would be the time it takes to train the model, which makes MLPs slightly easy to deal with (as opposed to RNNs, and other architectures). In addition, overfitting for the training data might occur with too many epochs.
 
-![Plot of the loss function](docs/img/speech2phonemes_loss.png)
+<p align="center">
+<img src="docs/img/speech2phonemes_loss.png" alt="Loss function">
+</p>
 
 ### Phonemes2Text
 
