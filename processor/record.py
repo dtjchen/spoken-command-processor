@@ -13,9 +13,9 @@ WIDTH = 2           # bytes per sample
 CHANNELS = 1        # mono
 RATE = 16000      	# Sampling rate (samples/second)
 BLOCKSIZE = 1024
-DURATION = 2        # Duration in seconds
+DURATION = 1        # Duration in seconds
 BLOCKS = int(DURATION * RATE / BLOCKSIZE)
-THRESHOLD = 8000
+THRESHOLD = 1000
 
 def record_input(save=True, wavfile="input.wav"):
     # Open audio device
@@ -34,6 +34,7 @@ def record_input(save=True, wavfile="input.wav"):
     # block reading
     bn, start_rec = 0, False
     frames = []
+    print("Start recording...")
     while bn < BLOCKS:
         # Read audio by block, convert
         input_string = stream.read(BLOCKSIZE)
@@ -41,7 +42,7 @@ def record_input(save=True, wavfile="input.wav"):
         # if input not loud enough, ignore
         if not start_rec and max(input_tuple) > THRESHOLD:
             start_rec = True
-            print("Start record...")
+            print("Threshold met!")
         if start_rec:
             frames.append(input_string)
             bn += 1
