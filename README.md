@@ -211,24 +211,23 @@ Install the Python-specific libraries listed in `requirements.txt` through:
 $ pip install -r requirements.txt
 ```
 
-### CLI*
+### CLI
 
 Python's [Click library](http://click.pocoo.org/5/) was used to implement a command-line interface to the entire application (see `driver.py`). The commands it provides are:
 
+#### List all supported CLI commands
 ```
 $ python driver.py --help
 ```
 
-```
-$ python driver.py setlistener --port 23111
-```
-
+#### Register and parse messages
 ```
 $ python driver.py register
 
 $ python driver.py parse
 ```
 
+#### Train and test different submodels
 ```
 $ python driver.py model speech2phonemes train --data 10000 --summarize True
 
@@ -237,4 +236,9 @@ $ python driver.py model speech2phonemes test
 $ python driver.py model phonemes2text train --data 1000
 
 $ python driver.py model phonemes2text test
+```
+
+#### Start listening for connections on port 23111
+```
+$ python driver.py setlistener --port 23111
 ```
