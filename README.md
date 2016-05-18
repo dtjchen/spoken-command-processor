@@ -1,4 +1,4 @@
-# Spoken Command Processor*
+# Spoken Command Processor
 
 Applications like Siri and Cortana allow users to specify directives by transcribing speech and mapping it to a series of known commands. For example, asking Siri "what song is this" and holding your phone close to the speaker that is playing the music will prompt it to send soundbytes of the song to its classification models.
 
@@ -31,6 +31,12 @@ Aside from the number of neurons in the network and the architecture of the laye
 The first model, "Speech2Phonemes," attempts the task of framewise phoneme classification. The process involves associating a sequence of speech frames to phoneme labels matched to those frames. Ideally, this would be a first step to achieving a speech recognition model able to recognize an arbitrary number of words by piecing together phonemes.
 
 The model used was a multilayer perception, an artificial neural network model often used in machine learning for classification tasks. The model had one hidden layer with 256 sigmoid activation units. A dropout layer was added, which switched off a percentage of the nodes in the network to prevent the domination of a single node and to decouple the influence between nodes, slightly improving accuracy of the model. The output layer had a dimension of 61, as there were 61 phoneme classes found in the dataset. Probabilities for each class was calculated through the final softmax layer.
+
+<p align="center">
+<img src="http://cs231n.github.io/assets/nn1/neural_net.jpeg" alt="MLP">
+<br>
+<i>Source: Stanford University's <a href="http://cs231n.github.io/neural-networks-1/">CS231n: "Convolutional Neural Networks for Visual Recognition"</a></i>
+</p>
 
 ```
 ____________________________________________________________________________________________________
@@ -149,10 +155,13 @@ This means that, in the first case, a 20-ms clip has a 47.4% chance of being cla
 
 #### Sources
 
-- http://andrew.gibiansky.com/blog/machine-learning/recurrent-neural-networks/
-- http://www.cs.toronto.edu/~fritz/absps/RNN13.pdf
-- http://karpathy.github.io/2015/05/21/rnn-effectiveness/
-- https://gist.github.com/karpathy/d4dee566867f8291f086
+- Gibiansky, Andrew. Recurrent Neural Networks. (http://andrew.gibiansky.com/blog/machine-learning/recurrent-neural-networks/)
+- Graves, Alex and Schmidhuber Jürgen, Framewise Phoneme Classification with Bidirectional LSTM and Other Neural Network Architectures. (ftp://ftp.idsia.ch/pub/juergen/nn_2005.pdf)
+- Graves, Alex, Mohamed, Abdel-rahman and Hinton, Geoffrey. Speech Recognition with Deep Recurrent Neural Networks. (http://www.cs.toronto.edu/~fritz/absps/RNN13.pdf)
+- Karpathy, Andrej. The Unreasonable Effectiveness of Recurrent Neural Networks.
+(http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
+- Lopes, Carla and Perdigão, Fernando. Phone Recognition on the TIMIT Database. (http://cdn.intechopen.com/pdfs/15948/InTech-Phoneme_recognition_on_the_timit_database.pdf)
+
 
 ## Implementation
 
@@ -162,13 +171,9 @@ The TIMIT dataset is an often used corpus developed by MIT, Stanford and Texas I
 
 The extensive labeling for the dataset made it a favorable one to use, as both phonetic and word labels for the speech files were provided with the data. Using those labels, we were able to perform framewise labeling and use this to train and test the data.
 
-### Keras*
+### Keras
 
-As stated, [Keras](https://github.com/fchollet/keras) is a deep learning library built on top of computational libraries that provides a high-level interface to add customizable layers based on a series of hyperparameters.
-
-> Keras is a minimalist, highly modular neural networks library, written in Python and capable of running on top of either TensorFlow or Theano. It was developed with a focus on enabling fast experimentation. Being able to go from idea to result with the least possible delay is key to doing good research.
-
-It provides a rich toolset to analyze the performance of an architecture.
+As stated, [Keras](https://github.com/fchollet/keras) is a deep learning library built on top of other computational packages that provides a high-level interface to train and test neural networks. It provides a rich toolset to analyze the performance of an architecture, and a clean method of prototyping models. One method to develop a working network is to use the Sequential model, which allows one to add customizable layers and tune its hyperparameters.
 
 ## Command Interpreter
 
@@ -192,9 +197,9 @@ The following output is from Redis' CLI:
 127.0.0.1:6379>
 ```
 
-### Sockets*
+### Sockets & Connections
 
-_[gafhasfhasfdadsfad]_
+In order to send messages to a remote machine, a simple networking interface was implemented. With the use of sockets, which allow two machines to communicate, the messages corresponding to vocal commands can be sent to other devices in the network (or connected to the internet). Depending on the remote device, these messages can range from simple text to prewritten code fragments, depending on the protocol the remote device intends to use. A level of encryption may also be used to ensure that malicious data is not processed.
 
 ### Installation
 
