@@ -1,3 +1,5 @@
+_Essentially all of the code was developed jointly by [@dtjchen](https://github.com/dtjchen) and [@mamigot](https://github.com/mamigot). Should've probably used [git-duet](https://github.com/pivotal/git-duet)._
+
 # Spoken Command Processor
 
 Applications like Siri and Cortana allow users to specify directives by transcribing speech and mapping it to a series of known commands. For example, asking Siri "what song is this" and holding your phone close to the speaker that is playing the music will prompt it to send soundbytes of the song to its classification models.
